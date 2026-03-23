@@ -1,0 +1,186 @@
+[
+  {
+    "ticker": "FUNO11",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "yahoo": "FUNO11.MX"
+  },
+  {
+    "ticker": "FMTY14",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "yahoo": "FMTY14.MX"
+  },
+  {
+    "ticker": "FNOVA17",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "yahoo": "FNOVA17.MX"
+  },
+  {
+    "ticker": "FIBRAPL14",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "yahoo": "FIBRAPL14.MX"
+  },
+  {
+    "ticker": "DANHOS13",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "yahoo": "DANHOS13.MX"
+  },
+  {
+    "ticker": "VTI",
+    "broker": "Bitso",
+    "type": "ETF",
+    "yahoo": "VTI"
+  },
+  {
+    "ticker": "GOOG",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "yahoo": "GOOG"
+  },
+  {
+    "ticker": "QQQ",
+    "broker": "Bitso",
+    "type": "ETF",
+    "yahoo": "QQQ"
+  },
+  {
+    "ticker": "MSFT",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "yahoo": "MSFT"
+  },
+  {
+    "ticker": "NVDA",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "yahoo": "NVDA"
+  },
+  {
+    "ticker": "AAPL",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "yahoo": "AAPL"
+  },
+  {
+    "ticker": "AMZN",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "yahoo": "AMZN"
+  },
+  {
+    "ticker": "FIHO12",
+    "yahoo": "FIHO12.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Exposición a hotelería (sector ausente en tu portafolio) con ingresos ligados a turismo y viajes; diversifica vs industrial/comercial/oficinas."
+  },
+  {
+    "ticker": "VWO",
+    "yahoo": "VWO",
+    "broker": "Bitso",
+    "type": "ETF",
+    "reason": "Mercados emergentes (región ausente); reduce concentración en EUA/mega-cap tech y añade diversificación geográfica y de factores."
+  },
+  {
+    "ticker": "AVGO",
+    "yahoo": "AVGO",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "reason": "Semiconductores e infraestructura para IA (sector faltante fuera de tus holdings actuales); complementa exposición a NVDA con un perfil más diversificado y flujo de caja."
+  },
+  {
+    "ticker": "JPM",
+    "yahoo": "JPM",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "reason": "Finanzas (sector ausente); banco líder con alta liquidez y exposición a crédito/consumo/mercados de capitales, diversificando vs tecnología."
+  },
+  {
+    "ticker": "UNH",
+    "yahoo": "UNH",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "reason": "Salud (sector ausente); líder en seguros/servicios de salud con alta liquidez y menor correlación con mega-cap tech."
+  },
+  {
+    "ticker": "TERRA13",
+    "yahoo": "TERRA13.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Industrial/logística (nearshoring México) - Yield ~6% - Sector industrial faltante en tus FIBRAs actuales"
+  },
+  {
+    "ticker": "SCHD",
+    "yahoo": "SCHD",
+    "broker": "Bitso",
+    "type": "ETF",
+    "reason": "US Dividend Growth/Quality - Yield ~3.5% - Complementa VTI/QQQ con enfoque a dividendos consistentes"
+  },
+  {
+    "ticker": "VYMI",
+    "yahoo": "VYMI",
+    "broker": "Bitso",
+    "type": "ETF",
+    "reason": "Dividendos internacionales ex-US - Yield ~4.5% - Diversificación geográfica y flujo de dividendos consistente"
+  },
+  {
+    "ticker": "FSHOP13",
+    "yahoo": "FSHOP13.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Centros comerciales/retail - Yield ~8% - Sector retail faltante en tu portafolio"
+  },
+  {
+    "ticker": "FIBRAMQ12",
+    "yahoo": "FIBRAMQ12.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Industrial (manufactura/logística norte) - Yield ~7% - Sector industrial faltante (no tienes FIBRA industrial pura)"
+  },
+  {
+    "ticker": "FCFE18",
+    "yahoo": "FCFE18.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Educación - Yield 7% - Sector ausente, flujos estables y defensivos"
+  },
+  {
+    "ticker": "FIBRAHD15",
+    "yahoo": "FIBRAHD15.MX",
+    "broker": "GBM",
+    "type": "FIBRA",
+    "reason": "Retail/hotel/oficinas - Yield 8% - Añade retail y hotelería, diversifica"
+  },
+  {
+    "ticker": "VXUS",
+    "yahoo": "VXUS",
+    "broker": "Bitso",
+    "type": "ETF",
+    "reason": "Ex-USA global - Yield 3% - Reduce sesgo USA, añade Europa/Asia"
+  },
+  {
+    "ticker": "VNQ",
+    "yahoo": "VNQ",
+    "broker": "Bitso",
+    "type": "ETF",
+    "reason": "US REITs - Yield 4% - Real estate USA, baja correlación vs tech"
+  },
+  {
+    "ticker": "PG",
+    "yahoo": "PG",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "reason": "Consumo defensivo - Yield 2.4% - Estabilidad y dividendos, sector ausente"
+  },
+  {
+    "ticker": "XOM",
+    "yahoo": "XOM",
+    "broker": "Bitso",
+    "type": "STOCK",
+    "reason": "Energía - Yield 3.3% - Cobertura inflación/commodities, sector ausente"
+  }
+]

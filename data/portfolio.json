@@ -1,0 +1,122 @@
+{
+  "accounts": {
+    "GBM": {
+      "currency": "MXN",
+      "holdings": [
+        {
+          "ticker": "FUNO11",
+          "type": "FIBRA",
+          "shares": 34.0,
+          "avg_cost": 28.21
+        },
+        {
+          "ticker": "FMTY14",
+          "type": "FIBRA",
+          "shares": 78.0,
+          "avg_cost": 15.21
+        },
+        {
+          "ticker": "FNOVA17",
+          "type": "FIBRA",
+          "shares": 38.0,
+          "avg_cost": 37.02
+        },
+        {
+          "ticker": "FIBRAPL14",
+          "type": "FIBRA",
+          "shares": 13.0,
+          "avg_cost": 84.92
+        },
+        {
+          "ticker": "DANHOS13",
+          "type": "FIBRA",
+          "shares": 23,
+          "avg_cost": 27.91
+        },
+        {
+          "ticker": "FIBRAMQ12",
+          "type": "FIBRA",
+          "shares": 4.0,
+          "avg_cost": 37.2
+        },
+        {
+          "ticker": "FCFE18",
+          "type": "FIBRA",
+          "shares": 6.0,
+          "avg_cost": 23.82
+        }
+      ]
+    },
+    "Bitso": {
+      "currency": "MXN",
+      "holdings": [
+        {
+          "ticker": "GOOG",
+          "type": "STOCK",
+          "shares": 0.154,
+          "avg_cost": 5654
+        },
+        {
+          "ticker": "QQQ",
+          "type": "ETF",
+          "shares": 0.054,
+          "avg_cost": 10965.1
+        },
+        {
+          "ticker": "MSFT",
+          "type": "STOCK",
+          "shares": 0.071,
+          "avg_cost": 8119.84
+        },
+        {
+          "ticker": "NVDA",
+          "type": "STOCK",
+          "shares": 0.175,
+          "avg_cost": 3293.66
+        },
+        {
+          "ticker": "AAPL",
+          "type": "STOCK",
+          "shares": 0.124,
+          "avg_cost": 4510
+        },
+        {
+          "ticker": "AMZN",
+          "type": "STOCK",
+          "shares": 0.065,
+          "avg_cost": 4220.84
+        },
+        {
+          "ticker": "VTI",
+          "type": "ETF",
+          "shares": 0.099,
+          "avg_cost": 6034.93
+        },
+        {
+          "ticker": "SCHD",
+          "type": "ETF",
+          "shares": 0.762,
+          "avg_cost": 548.7
+        },
+        {
+          "ticker": "VYMI",
+          "type": "ETF",
+          "shares": 0.241,
+          "avg_cost": 1727.26
+        },
+        {
+          "ticker": "XOM",
+          "type": "ETF",
+          "shares": 0.163,
+          "avg_cost": 2590.86
+        },
+        {
+          "ticker": "VXUS",
+          "type": "ETF",
+          "shares": 0.118,
+          "avg_cost": 1442.38
+        }
+      ]
+    }
+  }
+}

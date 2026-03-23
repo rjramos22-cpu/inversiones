@@ -1,0 +1,38 @@
+{
+  "last_discover": "2026-02-07T20:18:26.770719",
+  "assets_suggested": 6,
+  "assets_valid": 6,
+  "distribution": {
+    "fibras": 2,
+    "etfs": 2,
+    "stocks": 2
+  },
+  "pending_suggestions": [],
+  "portfolio_gaps": {
+    "fibra_gaps": [
+      "hotelería",
+      "retail",
+      "industrial nearshoring",
+      "infraestructura",
+      "educación"
+    ],
+    "etf_gaps": [
+      "dividendos USA",
+      "mercados emergentes",
+      "REITs USA",
+      "internacional ex-USA",
+      "small-cap",
+      "value",
+      "bonos"
+    ],
+    "stock_gaps": [
+      "salud",
+      "finanzas",
+      "consumo defensivo",
+      "energía",
+      "utilities",
+      "materiales",
+      "industriales"
+    ]
+  }
+}

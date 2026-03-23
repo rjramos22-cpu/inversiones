@@ -1,0 +1,1 @@
+worker: python investment_bot.py

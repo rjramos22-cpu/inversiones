@@ -1,0 +1,65 @@
+name: Discover New Assets
+
+on:
+  schedule:
+    # Mensual: día 1 a las 10 AM UTC (solo suggest)
+    - cron: "0 10 1 * *"
+  
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Modo de operación'
+        required: true
+        default: 'suggest'
+        type: choice
+        options:
+          - suggest
+          - commit
+      max_assets:
+        description: 'Máximo de instrumentos a descubrir'
+        required: false
+        default: '6'
+
+permissions:
+  contents: write
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run discover
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          #DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MODE: ${{ github.event.inputs.mode || 'suggest' }}
+          MAX_NEW_ASSETS: ${{ github.event.inputs.max_assets || '6' }}
+        run: python discover_new_assets.py
+
+      - name: Commit metadata (modo suggest)
+        if: ${{ github.event.inputs.mode == 'suggest' || github.event_name == 'schedule' }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/discover_metadata.json
+          git diff --staged --quiet || git commit -m "🔍 Discover: Metadata updated ($(date +%Y-%m-%d))"
+          git push || echo "No changes to push"
+
+      - name: Commit universe (modo commit)
+        if: ${{ github.event.inputs.mode == 'commit' }}
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/universe.json data/discover_metadata.json
+          git diff --staged --quiet || git commit -m "✅ Discover: Added new assets ($(date +%Y-%m-%d))"
+          git push || echo "No changes to push"
