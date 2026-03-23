@@ -1443,30 +1443,71 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ Error: {str(error)}")
         traceback.print_exc()
 
-
 @bot.command(name="help")
 async def help_command(ctx):
+    """Muestra todos los comandos"""
+    
     embed = discord.Embed(
-        title="🤖 COMANDOS — Investment Bot v4.0",
-        description="₿ v4.0: 10% del presupuesto va a crypto recomendada por IA",
+        title="🤖 COMANDOS DISPONIBLES",
+        description="Investment Bot v3.3 - Reporte ejecuta directo en el bot",
         color=discord.Color.green()
     )
-    embed.add_field(name="📊 Consultas",
-                    value="`!balance` `!portafolio` `!señales`", inline=False)
-    embed.add_field(name="💰 Reporte (90% activos + 10% crypto)",
-                    value="`!reporte PRESUPUESTO`\nEj: `!reporte 1500`", inline=False)
-    embed.add_field(name="💱 Transacciones",
-                    value="`!vender TICKER CANTIDAD`\n`!comprar TICKER CANTIDAD PRECIO [BROKER]`", inline=False)
-    embed.add_field(name="🔍 Discover",
-                    value="`!discover [n]` `!discover_commit` `!discover_status`", inline=False)
-    embed.add_field(name="🔧 Debug",
-                    value="`!debug TICKER` `!debug_total` `!test_github`", inline=False)
+    embed.add_field(
+        name="⚙️ Configuracion",
+        value=(
+             "`!test_github` - Probar conexión GitHub\n"
+        ),
+        inline=False
+    )
+
+    embed.add_field(
+        name="📊 Consultas",
+        value=(
+            "`!balance` - Ver tu balance\n"
+            "`!portafolio` - Ver tus holdings\n"
+            "`!señales` - Ver señales de venta\n"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="💱 Transacciones",
+        value=(
+            "`!vender TICKER CANTIDAD` - Vender shares\n"
+            "`!comprar TICKER CANTIDAD PRECIO [BROKER]` - Comprar shares\n"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📈 Análisis",
+        value=(
+            "`!reporte PRESUPUESTO` - 🆕 Generar reporte (directo en bot)\n"
+            "`!discover_status` - Ver sugerencias\n"
+            "`!discover [cantidad]` - Descubrir nuevos activos\n"
+            "`!discover_commit` - Aprobar sugerencias\n"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🤖 Automatización",
+        value=(
+            "**Día 1 y 16 (15:00 UTC):**\n"
+            "1. Muestra señales de venta\n"
+            "2. Pide presupuesto\n"
+            "3. Genera reporte\n\n"
+            "**Día 1 (10:00 UTC):**\n"
+            "→ Discover automático (6 activos)\n"
+        ),
+        inline=False
+    )
     embed.add_field(name="₿ Crypto Universe",
                     value="BTC · ETH · SOL · LINK · ADA · AVAX\n(IA elige 2 según tu perfil)", inline=False)
-    embed.set_footer(text="Reportes automáticos: día 1 y 16 a las 15:00 UTC")
+    
+    embed.set_footer(text="💡 v3.3 - !reporte ahora ejecuta directo en el bot (sin webhook)")
+    
     await ctx.send(embed=embed)
-
-
 # ════════════════════════════════════════════════════════════════
 # INICIAR
 # ════════════════════════════════════════════════════════════════
