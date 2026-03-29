@@ -1124,47 +1124,134 @@ async def sell(ctx, ticker: str, shares: float):
 
 @bot.command(name="comprar")
 async def buy(ctx, ticker: str, shares: float, price: float, broker: str = None):
+    """
+    Compra shares de cualquier activo.
+    Si el ticker es una crypto conocida (BTC, ETH, SOL, LINK, ADA, AVAX):
+      - Broker se fuerza a Bitso automáticamente
+      - Se agrega a universe.json si no existe (para !balance y !señales)
+    Uso: !comprar BTC 0.001 1200000
+         !comprar FUNO11 10 28.50
+         !comprar AAPL 0.5 4500 Bitso
+    """
     ticker = ticker.upper()
-    await ctx.send(f"⏳ Procesando compra de {shares} {ticker} @ ${price}...")
-    portfolio, sha = github_get_file("data/portfolio.json")
+    await ctx.send(f"⏳ Procesando compra de {shares} {ticker} @ ${price:,.2f} MXN...")
+
+    # ── Mapa rápido del universo de cryptos ───────────────────────
+    CRYPTO_MAP = {c["ticker"]: c for c in CRYPTO_UNIVERSE}
+    is_crypto  = ticker in CRYPTO_MAP
+
+    # ── Determinar broker ─────────────────────────────────────────
+    if is_crypto:
+        # Las cryptos siempre van en Bitso, sin importar lo que diga el usuario
+        broker = "Bitso"
+        await ctx.send(f"₿ **Crypto detectada** → broker asignado automáticamente: **Bitso**")
+    elif not broker:
+        # Buscar en universe.json
+        universe_tmp, _ = github_get_file("data/universe.json")
+        if universe_tmp:
+            for item in universe_tmp:
+                if item.get("ticker") == ticker:
+                    broker = item.get("broker", "GBM")
+                    break
+        if not broker:
+            await ctx.send(
+                f"⚠️ **{ticker}** no está en el universo.\n"
+                f"Especifica el broker: `!comprar {ticker} {shares} {price} GBM` o `!comprar {ticker} {shares} {price} Bitso`"
+            )
+            return
+
+    broker = "GBM" if broker.upper() == "GBM" else "Bitso"
+
+    # ── Cargar portfolio ──────────────────────────────────────────
+    portfolio, port_sha = github_get_file("data/portfolio.json")
     if not portfolio:
         await ctx.send("❌ Error descargando portfolio"); return
-    if not broker:
-        universe, _ = github_get_file("data/universe.json")
-        if universe:
-            for item in universe:
-                if item.get("ticker") == ticker:
-                    broker = item.get("broker", "GBM"); break
-        if not broker:
-            await ctx.send(f"⚠️ Especifica broker: `!comprar {ticker} {shares} {price} GBM`"); return
-    broker = "GBM" if broker.upper() == "GBM" else "Bitso"
+
     if broker not in portfolio.get("accounts", {}):
         portfolio["accounts"][broker] = {"currency": "MXN", "holdings": []}
+
+    # ── Actualizar o crear holding ────────────────────────────────
+    asset_type = "CRYPTO" if is_crypto else "STOCK"
     found = False
+
     for i, h in enumerate(portfolio["accounts"][broker]["holdings"]):
         if h["ticker"] == ticker:
-            os_ = h["shares"]; oc = h["avg_cost"]
-            ts  = os_ + shares; tv = (os_ * oc) + (shares * price); na = tv / ts
-            portfolio["accounts"][broker]["holdings"][i]["shares"]   = round(ts, 3)
+            os_  = float(h["shares"])
+            oc   = float(h["avg_cost"])
+            ts   = os_ + shares
+            na   = ((os_ * oc) + (shares * price)) / ts
+            portfolio["accounts"][broker]["holdings"][i]["shares"]   = round(ts, 8 if is_crypto else 3)
             portfolio["accounts"][broker]["holdings"][i]["avg_cost"] = round(na, 2)
-            await ctx.send(f"📈 **{ticker}** Shares: {os_:.3f}→{ts:.3f} | Avg: ${oc:.2f}→${na:.2f}")
-            found = True; break
+            await ctx.send(
+                f"📈 **{ticker}** actualizado\n"
+                f"Cantidad: `{os_:.8f}` → `{ts:.8f}`\n"
+                f"Precio promedio: `${oc:,.2f}` → `${na:,.2f}` MXN"
+            )
+            found = True
+            break
+
     if not found:
-        universe, _ = github_get_file("data/universe.json")
-        asset_type  = "STOCK"
-        if universe:
-            for item in universe:
-                if item.get("ticker") == ticker:
-                    asset_type = item.get("type", "STOCK"); break
+        # Detectar tipo si no es crypto
+        if not is_crypto:
+            universe_tmp, _ = github_get_file("data/universe.json")
+            if universe_tmp:
+                for item in universe_tmp:
+                    if item.get("ticker") == ticker:
+                        asset_type = item.get("type", "STOCK")
+                        break
+
         portfolio["accounts"][broker]["holdings"].append({
-            "ticker": ticker, "type": asset_type,
-            "shares": round(shares, 3), "avg_cost": round(price, 2)
+            "ticker":   ticker,
+            "type":     asset_type,
+            "shares":   round(shares, 8 if is_crypto else 3),
+            "avg_cost": round(price, 2),
         })
-        await ctx.send(f"✨ **Nuevo holding:** {ticker} ({asset_type}) en {broker}")
-    if github_save_file("data/portfolio.json", portfolio, sha, f"💱 Buy {ticker}"):
-        await ctx.send("✅ Portfolio actualizado en GitHub")
-    else:
-        await ctx.send("❌ Error guardando. Usa `!test_github`")
+        await ctx.send(
+            f"✨ **Nuevo holding creado**\n"
+            f"Ticker: `{ticker}` | Tipo: `{asset_type}` | Broker: `{broker}`\n"
+            f"Cantidad: `{shares:.8f}` | Precio: `${price:,.2f}` MXN\n"
+            f"Inversión: `${shares * price:,.2f}` MXN"
+        )
+
+    # ── Guardar portfolio ─────────────────────────────────────────
+    if not github_save_file("data/portfolio.json", portfolio, port_sha, f"💱 Buy {ticker} ({broker})"):
+        await ctx.send("❌ Error guardando portfolio. Usa `!test_github`")
+        return
+
+    await ctx.send("✅ **Portfolio actualizado en GitHub**")
+
+    # ── Auto-agregar crypto a universe.json si no existe ──────────
+    if is_crypto:
+        universe, uni_sha = github_get_file("data/universe.json")
+        if universe is None:
+            universe = []
+
+        already_in = any(item.get("ticker") == ticker for item in universe)
+
+        if already_in:
+            await ctx.send(f"ℹ️ `{ticker}` ya estaba en el universo — `!balance` y `!señales` la monitorean ✅")
+        else:
+            crypto_info = CRYPTO_MAP[ticker]
+            new_entry = {
+                "ticker": ticker,
+                "yahoo":  crypto_info["yahoo"],   # ej: "BTC-USD"
+                "broker": "Bitso",
+                "type":   "CRYPTO",
+                "reason": crypto_info["description"],
+            }
+            universe.append(new_entry)
+
+            if github_save_file("data/universe.json", universe, uni_sha, f"₿ Auto-add crypto {ticker}"):
+                await ctx.send(
+                    f"₿ **`{ticker}` agregado al universo automáticamente**\n"
+                    f"Yahoo Finance: `{crypto_info['yahoo']}`\n"
+                    f"Ahora aparece en `!balance`, `!señales` y futuros `!reporte` ✅"
+                )
+            else:
+                await ctx.send(
+                    f"⚠️ Portfolio guardado, pero no se pudo agregar `{ticker}` al universo.\n"
+                    f"Agrégalo manualmente en `data/universe.json` con yahoo: `{crypto_info['yahoo']}`"
+                )
 
 
 @bot.command(name="test_github")
@@ -1443,17 +1530,18 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ Error: {str(error)}")
         traceback.print_exc()
 
+
 @bot.command(name="help")
 async def help_command(ctx):
     """Muestra todos los comandos"""
     
     embed = discord.Embed(
-        title="🤖 COMANDOS DISPONIBLES",
+        title=":robot: COMANDOS DISPONIBLES",
         description="Investment Bot v3.3 - Reporte ejecuta directo en el bot",
         color=discord.Color.green()
     )
     embed.add_field(
-        name="⚙️ Configuracion",
+        name=":gear: Configuracion",
         value=(
              "`!test_github` - Probar conexión GitHub\n"
         ),
@@ -1461,7 +1549,7 @@ async def help_command(ctx):
     )
 
     embed.add_field(
-        name="📊 Consultas",
+        name=":bar_chart: Consultas",
         value=(
             "`!balance` - Ver tu balance\n"
             "`!portafolio` - Ver tus holdings\n"
@@ -1471,7 +1559,7 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name="💱 Transacciones",
+        name=":currency_exchange: Transacciones",
         value=(
             "`!vender TICKER CANTIDAD` - Vender shares\n"
             "`!comprar TICKER CANTIDAD PRECIO [BROKER]` - Comprar shares\n"
@@ -1480,9 +1568,9 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name="📈 Análisis",
+        name=":chart_with_upwards_trend: Análisis",
         value=(
-            "`!reporte PRESUPUESTO` - 🆕 Generar reporte (directo en bot)\n"
+            "`!reporte PRESUPUESTO` - :new: Generar reporte (directo en bot)\n"
             "`!discover_status` - Ver sugerencias\n"
             "`!discover [cantidad]` - Descubrir nuevos activos\n"
             "`!discover_commit` - Aprobar sugerencias\n"
@@ -1491,7 +1579,7 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name="🤖 Automatización",
+        name=":robot: Automatización",
         value=(
             "**Día 1 y 16 (15:00 UTC):**\n"
             "1. Muestra señales de venta\n"
@@ -1505,9 +1593,11 @@ async def help_command(ctx):
     embed.add_field(name="₿ Crypto Universe",
                     value="BTC · ETH · SOL · LINK · ADA · AVAX\n(IA elige 2 según tu perfil)", inline=False)
     
-    embed.set_footer(text="💡 v3.3 - !reporte ahora ejecuta directo en el bot (sin webhook)")
+    embed.set_footer(text=":bulb: v3.3 - !reporte ahora ejecuta directo en el bot (sin webhook)")
     
     await ctx.send(embed=embed)
+
+
 # ════════════════════════════════════════════════════════════════
 # INICIAR
 # ════════════════════════════════════════════════════════════════
