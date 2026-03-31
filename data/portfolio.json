@@ -44,6 +44,12 @@
           "type": "FIBRA",
           "shares": 6.0,
           "avg_cost": 23.82
+        },
+        {
+          "ticker": "FIHO12",
+          "type": "FIBRA",
+          "shares": 66.0,
+          "avg_cost": 7.95
         }
       ]
     },
