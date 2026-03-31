@@ -50,6 +50,12 @@
           "type": "FIBRA",
           "shares": 66.0,
           "avg_cost": 7.95
+        },
+        {
+          "ticker": "FSHOP13",
+          "type": "FIBRA",
+          "shares": 48.0,
+          "avg_cost": 10.93
         }
       ]
     },
