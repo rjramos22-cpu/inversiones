@@ -93,12 +93,6 @@
           "avg_cost": 4510
         },
         {
-          "ticker": "AMZN",
-          "type": "STOCK",
-          "shares": 0.065,
-          "avg_cost": 4220.84
-        },
-        {
           "ticker": "VTI",
           "type": "ETF",
           "shares": 0.099,
