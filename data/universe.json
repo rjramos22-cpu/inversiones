@@ -182,5 +182,12 @@
     "broker": "Bitso",
     "type": "STOCK",
     "reason": "Energía - Yield 3.3% - Cobertura inflación/commodities, sector ausente"
+  },
+  {
+    "ticker": "AVAX",
+    "yahoo": "AVAX-USD",
+    "broker": "Bitso",
+    "type": "CRYPTO",
+    "reason": "L1 con subnets, fuerte en DeFi institucional"
   }
 ]
