@@ -36,8 +36,8 @@
         {
           "ticker": "FIBRAMQ12",
           "type": "FIBRA",
-          "shares": 4.0,
-          "avg_cost": 37.2
+          "shares": 16.0,
+          "avg_cost": 40.58
         },
         {
           "ticker": "FCFE18",
