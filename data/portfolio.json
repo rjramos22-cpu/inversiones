@@ -115,6 +115,12 @@
           "type": "ETF",
           "shares": 0.118,
           "avg_cost": 1442.38
+        },
+        {
+          "ticker": "AVAX",
+          "type": "CRYPTO",
+          "shares": 1.4,
+          "avg_cost": 161.45
         }
       ]
     }
