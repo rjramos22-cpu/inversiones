@@ -121,6 +121,12 @@
           "type": "CRYPTO",
           "shares": 1.4,
           "avg_cost": 161.45
+        },
+        {
+          "ticker": "LINK",
+          "type": "CRYPTO",
+          "shares": 0.75989989,
+          "avg_cost": 159.14
         }
       ]
     }
