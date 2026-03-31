@@ -189,5 +189,12 @@
     "broker": "Bitso",
     "type": "CRYPTO",
     "reason": "L1 con subnets, fuerte en DeFi institucional"
+  },
+  {
+    "ticker": "LINK",
+    "yahoo": "LINK-USD",
+    "broker": "Bitso",
+    "type": "CRYPTO",
+    "reason": "Oracle on-chain, relacionado a datos/IA (encaja con NVDA exposure)"
   }
 ]
