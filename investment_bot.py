@@ -375,32 +375,84 @@ def get_crypto_recommendation_sync(
         )
 
     prompt = f"""
-Eres analista de criptomonedas para portafolios mixtos.
+Eres un analista especializado en criptomonedas para portafolios de inversión mixtos (acciones + crypto).
 
-PORTAFOLIO ACTUAL: {', '.join(holdings_summary)}
-PERFIL: Tech-pesado (NVDA,GOOG,MSFT,AAPL), dividendos+crecimiento 60/40, largo plazo, moderado, broker Bitso.
+═══════════════════════════════════════════════════
+PERFIL DEL INVERSIONISTA
+═══════════════════════════════════════════════════
+Holdings actuales: {', '.join(holdings_summary)}
 
-CRYPTOS DISPONIBLES:
+Características del perfil:
+- Alto sesgo tecnológico (NVDA, GOOG, MSFT, AAPL) → crypto que diversifique, no duplique tech puro
+- Estrategia 60% dividendos / 40% crecimiento → preferir cryptos con flujo (staking) o alta liquidez
+- Horizonte largo plazo (5-10 años) → evitar cryptos especulativas de corta vida
+- Perfil de riesgo: MODERADO → no más de 1 crypto de alta volatilidad en la selección
+- Broker disponible: Bitso (compra fraccional en MXN)
+
+═══════════════════════════════════════════════════
+GLOSARIO DE MÉTRICAS (úsalas para decidir)
+═══════════════════════════════════════════════════
+- score = retorno_3M / volatilidad_3M → ratio riesgo/retorno del trimestre
+  • score > 1.0  → excelente (alto retorno relativo al riesgo asumido)
+  • 0.3 a 1.0   → aceptable
+  • 0 a 0.3     → débil (poco retorno por el riesgo tomado)
+  • score < 0   → negativo (cayó en los últimos 3 meses)
+- ret_3M = retorno de precio en los últimos 63 días hábiles
+- vol_3M = volatilidad anualizada de los últimos 63 días (mayor = más riesgo)
+- Si algún campo es None/N/A: ignora esa métrica, usa solo las disponibles
+
+═══════════════════════════════════════════════════
+CRYPTOS DISPONIBLES CON DATOS DE MERCADO
+═══════════════════════════════════════════════════
 {chr(10).join(crypto_lines)}
 
-FX: 1 USD = {usd_to_mxn:.2f} MXN
-PRESUPUESTO CRYPTO: ${budget_crypto:,.2f} MXN
+Tipo de cambio: 1 USD = {usd_to_mxn:.2f} MXN
+Presupuesto crypto disponible: ${budget_crypto:,.2f} MXN
 
-Recomienda EXACTAMENTE 2 cryptos complementarias al perfil.
-Distribuye: 70% a la de menor riesgo relativo, 30% a la de mayor potencial.
+═══════════════════════════════════════════════════
+INSTRUCCIONES DE SELECCIÓN
+═══════════════════════════════════════════════════
+1. Selecciona EXACTAMENTE 2 cryptos siguiendo esta lógica:
+   - Crypto A (60-70% del presupuesto): la de MEJOR score Y menor volatilidad relativa.
+     Prioriza activos establecidos (market cap alto, tags: store_of_value, infraestructura).
+   - Crypto B (30-40% del presupuesto): la de MAYOR potencial de crecimiento entre las restantes,
+     pero que sea POCO CORRELACIONADA con Crypto A.
+     Evita elegir 2 cryptos del mismo tipo (ej: 2 L1 smart contract).
 
-RESPONDE SOLO JSON (sin markdown):
+2. Criterio de correlación para evitar duplicar exposición:
+   - BTC + cualquier altcoin = OK (son poco correlacionados en tendencia)
+   - ETH + SOL = evitar (ambas L1 smart contract, alta correlación)
+   - ETH + LINK = OK (infraestructura + oracle, complementarios)
+   - BTC + ETH = OK si los scores lo justifican (diferente naturaleza: reserva vs plataforma)
+
+3. Ajusta el split según la volatilidad del periodo:
+   - Si vol_3M de Crypto B > 1.5x la de Crypto A → reduce B a 25-30%
+   - Si vol_3M de Crypto B < 1.2x la de Crypto A → puedes subir B hasta 40%
+
+4. Si una crypto tiene score negativo → solo inclúyela si no hay alternativa con score positivo
+
+═══════════════════════════════════════════════════
+FORMATO DE RESPUESTA — SOLO JSON, SIN MARKDOWN
+═══════════════════════════════════════════════════
 {{
   "recommendations": [
-    {{"ticker": "BTC", "allocation_pct": 70, "amount_mxn": 0,
-      "reason_short": "Store of value - correlación tech bull markets",
-      "risk_level": "MEDIO"}},
-    {{"ticker": "ETH", "allocation_pct": 30, "amount_mxn": 0,
-      "reason_short": "Infraestructura digital - staking yield ~4%",
-      "risk_level": "MEDIO-ALTO"}}
+    {{
+      "ticker": "TICKER_ELEGIDO",
+      "allocation_pct": 65,
+      "amount_mxn": 0,
+      "reason_short": "Razón concreta citando score y característica del perfil (máx 90 chars)",
+      "risk_level": "BAJO|MEDIO|MEDIO-ALTO|ALTO"
+    }},
+    {{
+      "ticker": "TICKER_ELEGIDO",
+      "allocation_pct": 35,
+      "amount_mxn": 0,
+      "reason_short": "Razón concreta citando diferenciación vs Crypto A (máx 90 chars)",
+      "risk_level": "BAJO|MEDIO|MEDIO-ALTO|ALTO"
+    }}
   ],
-  "strategy_summary": "2 líneas explicando la estrategia crypto para este perfil",
-  "warning": "Recordatorio de riesgo específico"
+  "strategy_summary": "1-2 oraciones: por qué ESTA combinación encaja con el perfil, citando al menos un dato numérico",
+  "warning": "Riesgo específico de ESTE periodo para ESTAS cryptos (no genérico)"
 }}"""
 
     def _build_plan(recs):
@@ -671,35 +723,98 @@ def _run_full_report_sync(budget_mxn: float):
         }
 
         prompt = f"""
-Eres analista financiero experto en inversión pasiva para inversionistas mexicanos.
-Genera un reporte quincenal que incluye activos tradicionales Y criptomonedas.
+Eres un analista financiero especializado en inversión pasiva para inversionistas mexicanos.
+Tu trabajo es convertir datos de mercado en decisiones concretas y accionables.
 
+═══════════════════════════════════════════════════
+CONTEXTO DE INVERSIÓN
+═══════════════════════════════════════════════════
 Presupuesto total: ${budget_mxn:,.2f} MXN
-  └─ Activos (90%): ${budget_assets:,.2f} MXN
-  └─ Crypto  (10%): ${budget_crypto:,.2f} MXN
+  └─ Activos tradicionales (90%): ${budget_assets:,.2f} MXN
+  └─ Crypto (10%):                ${budget_crypto:,.2f} MXN
 
-DATOS:
+Estrategia del inversionista:
+- Inversión pasiva, largo plazo (5-10 años)
+- 60% orientado a dividendos / 40% crecimiento
+- FIBRAs en GBM (pesos MXN, títulos enteros)
+- ETFs y acciones en Bitso (dólares, fraccional)
+- Perfil moderado: tolera volatilidad corto plazo si el fundamento es sólido
+
+═══════════════════════════════════════════════════
+GLOSARIO DE CAMPOS (interpreta con esto, no adivines)
+═══════════════════════════════════════════════════
+- score = ret_3m / vol_3m → retorno ajustado por riesgo del trimestre
+  • > 1.5   → muy fuerte (prioridad alta de compra)
+  • 0.5-1.5 → bueno (compra justificada)
+  • 0-0.5   → neutro (recompra solo si ya lo tienes)
+  • < 0     → negativo (está cayendo — candidato a EVITAR salvo razón fundamental)
+- ret_3m = retorno total de precio en 63 días hábiles (positivo = subió)
+- vol_3m = volatilidad anualizada en 63 días (mayor = más riesgo diario)
+- price = precio actual en su moneda nativa (MXN para .MX, USD para el resto)
+- None / null en cualquier campo = dato no disponible, NO lo uses en el análisis
+
+Reglas por tipo de activo:
+- FIBRAs (.MX): evalúa principalmente por yield implícito y estabilidad (vol baja es buena señal)
+- ETFs: evalúa diversificación + score; un ETF con score 0.4 sigue siendo válido si cubre sector faltante
+- Acciones: exige score > 0.3 mínimo; si cae fuerte (ret < -15%) menciona si es oportunidad o trampa
+
+═══════════════════════════════════════════════════
+DATOS DEL PERIODO
+═══════════════════════════════════════════════════
 {json.dumps(context, ensure_ascii=False, indent=2)}
 
-FORMATO (máximo 1000 palabras):
+═══════════════════════════════════════════════════
+INSTRUCCIONES POR SECCIÓN
+═══════════════════════════════════════════════════
 
-## 📊 Resumen Ejecutivo
-[2 párrafos: contexto de mercado y estrategia del periodo]
+## 📊 Resumen Ejecutivo (150-200 palabras)
+Responde estas 3 preguntas con datos concretos:
+1. ¿Qué tipo de activos tuvieron mejor score este periodo? (nombra al menos 2)
+2. ¿Hay algún patrón claro? (ej: tech subió, FIBRAs cayeron, etc.)
+3. ¿Qué justifica la estrategia de este reporte? (recompra vs nuevas entradas)
+Cita al menos 3 scores o retornos reales del JSON.
 
 ## 💰 Plan — Activos Tradicionales (90%)
-[Cada activo: score, retorno 3M, razón de selección]
+Para cada activo en chosen_for_buy:
+• **TICKER** (tipo) — Score: X.XX | Ret 3M: +X.X%
+  └ [1 oración: por qué este activo específico este periodo, no genérico]
+  └ [Si es recompra: menciona que ya lo tienes y por qué reforzar]
+  └ [Si es nuevo: qué hueco del portafolio cubre]
+Si vol_3m está disponible: menciona si es alta o baja para el tipo de activo.
 
 ## ₿ Plan — Crypto (10%)
-[Cryptos recomendadas, razón para ESTE perfil específico]
-[Nota: mantener crypto en 10% máximo por volatilidad]
+Para cada crypto en crypto_plan:
+• **TICKER** — Score: X.XX | Asignación: X%
+  └ [Razón específica para ESTE perfil: qué complementa del portafolio existente]
+  └ [Dato de volatilidad si disponible]
+Recordatorio: mantener crypto en 10% máximo del portafolio total.
 
-## 🎯 Top 3 PRIORIZAR / Top 3 EVITAR
-[Con scores]
+## 🎯 Top 3 PRIORIZAR este periodo
+Lista los 3 activos con mejor score disponible (de todos: activos + crypto).
+Formato: "1. **TICKER** (score: X.XX) — [razón en 10 palabras]"
+No repitas los mismos que ya están en el plan sin justificación adicional.
 
-## ⚠️ Consideraciones
-[Riesgos del periodo, limitaciones del análisis]
+## 🚫 Top 3 EVITAR o REDUCIR
+Lista los 3 activos con peor score o ret_3m más negativo (que estén en el universo).
+Formato: "1. **TICKER** (score: X.XX) — [por qué evitar ahora]"
+Si tiene score negativo por datos insuficientes (None), indícalo claramente.
 
-REGLAS: NO prometas rendimientos. USA solo datos del JSON. Sé específico con números.
+## ⚠️ Consideraciones del Periodo
+- Máximo 3 puntos concretos, no genéricos
+- Al menos 1 riesgo específico de ESTE conjunto de activos (no "los mercados son volátiles")
+- Al menos 1 limitación real de los datos (ej: si varios tickers tienen vol_3m=None)
+- Máximo 2 líneas por punto
+
+═══════════════════════════════════════════════════
+REGLAS ABSOLUTAS
+═══════════════════════════════════════════════════
+✅ Cita números reales del JSON en cada sección
+✅ Distingue entre activos que ya tienes (recompra) vs nuevos
+✅ Máximo 1000 palabras en total
+❌ NO prometas rendimientos futuros
+❌ NO uses datos que aparezcan como null/None
+❌ NO repitas la misma razón genérica para varios activos
+❌ NO menciones noticias o eventos que no estén en los datos
 """
         try:
             resp     = client_openai.chat.completions.create(
@@ -1125,40 +1240,38 @@ async def sell(ctx, ticker: str, shares: float):
 @bot.command(name="comprar")
 async def buy(ctx, ticker: str, shares: float, price: float, broker: str = None):
     """
-    Compra shares de cualquier activo.
-    Si el ticker es una crypto conocida (BTC, ETH, SOL, LINK, ADA, AVAX):
-      - Broker se fuerza a Bitso automáticamente
-      - Se agrega a universe.json si no existe (para !balance y !señales)
-    Uso: !comprar BTC 0.001 1200000
-         !comprar FUNO11 10 28.50
-         !comprar AAPL 0.5 4500 Bitso
+    Compra activos tradicionales o crypto.
+    Cryptos soportadas: BTC, ETH, SOL, LINK, ADA, AVAX
+      → Broker se asigna automáticamente a Bitso
+      → Se agrega a universe.json automáticamente (aparece en !balance y !señales)
+    Uso:
+      !comprar BTC 0.001 1200000
+      !comprar FUNO11 10 28.50
+      !comprar AAPL 0.5 4500 Bitso
     """
     ticker = ticker.upper()
-    await ctx.send(f"⏳ Procesando compra de {shares} {ticker} @ ${price:,.2f} MXN...")
 
-    # ── Mapa rápido del universo de cryptos ───────────────────────
+    # ── Mapa de cryptos conocidas ─────────────────────────────────
     CRYPTO_MAP = {c["ticker"]: c for c in CRYPTO_UNIVERSE}
     is_crypto  = ticker in CRYPTO_MAP
 
+    await ctx.send(f"⏳ Procesando compra de {shares} {ticker} @ ${price:,.2f} MXN...")
+
     # ── Determinar broker ─────────────────────────────────────────
     if is_crypto:
-        # Las cryptos siempre van en Bitso, sin importar lo que diga el usuario
         broker = "Bitso"
-        await ctx.send(f"₿ **Crypto detectada** → broker asignado automáticamente: **Bitso**")
+        await ctx.send(f"₿ **Crypto detectada** → broker: **Bitso** (automático)")
     elif not broker:
-        # Buscar en universe.json
         universe_tmp, _ = github_get_file("data/universe.json")
         if universe_tmp:
             for item in universe_tmp:
                 if item.get("ticker") == ticker:
-                    broker = item.get("broker", "GBM")
-                    break
+                    broker = item.get("broker", "GBM"); break
         if not broker:
             await ctx.send(
                 f"⚠️ **{ticker}** no está en el universo.\n"
                 f"Especifica el broker: `!comprar {ticker} {shares} {price} GBM` o `!comprar {ticker} {shares} {price} Bitso`"
-            )
-            return
+            ); return
 
     broker = "GBM" if broker.upper() == "GBM" else "Bitso"
 
@@ -1171,86 +1284,76 @@ async def buy(ctx, ticker: str, shares: float, price: float, broker: str = None)
         portfolio["accounts"][broker] = {"currency": "MXN", "holdings": []}
 
     # ── Actualizar o crear holding ────────────────────────────────
+    decimals   = 8 if is_crypto else 3
     asset_type = "CRYPTO" if is_crypto else "STOCK"
-    found = False
+    found      = False
 
     for i, h in enumerate(portfolio["accounts"][broker]["holdings"]):
         if h["ticker"] == ticker:
-            os_  = float(h["shares"])
-            oc   = float(h["avg_cost"])
-            ts   = os_ + shares
-            na   = ((os_ * oc) + (shares * price)) / ts
-            portfolio["accounts"][broker]["holdings"][i]["shares"]   = round(ts, 8 if is_crypto else 3)
+            os_ = float(h["shares"]); oc = float(h["avg_cost"])
+            ts  = os_ + shares
+            na  = ((os_ * oc) + (shares * price)) / ts
+            portfolio["accounts"][broker]["holdings"][i]["shares"]   = round(ts, decimals)
             portfolio["accounts"][broker]["holdings"][i]["avg_cost"] = round(na, 2)
             await ctx.send(
                 f"📈 **{ticker}** actualizado\n"
-                f"Cantidad: `{os_:.8f}` → `{ts:.8f}`\n"
+                f"Cantidad: `{os_:.{decimals}f}` → `{ts:.{decimals}f}`\n"
                 f"Precio promedio: `${oc:,.2f}` → `${na:,.2f}` MXN"
             )
-            found = True
-            break
+            found = True; break
 
     if not found:
-        # Detectar tipo si no es crypto
         if not is_crypto:
             universe_tmp, _ = github_get_file("data/universe.json")
             if universe_tmp:
                 for item in universe_tmp:
                     if item.get("ticker") == ticker:
-                        asset_type = item.get("type", "STOCK")
-                        break
-
+                        asset_type = item.get("type", "STOCK"); break
         portfolio["accounts"][broker]["holdings"].append({
             "ticker":   ticker,
             "type":     asset_type,
-            "shares":   round(shares, 8 if is_crypto else 3),
+            "shares":   round(shares, decimals),
             "avg_cost": round(price, 2),
         })
         await ctx.send(
             f"✨ **Nuevo holding creado**\n"
             f"Ticker: `{ticker}` | Tipo: `{asset_type}` | Broker: `{broker}`\n"
-            f"Cantidad: `{shares:.8f}` | Precio: `${price:,.2f}` MXN\n"
-            f"Inversión: `${shares * price:,.2f}` MXN"
+            f"Cantidad: `{shares:.{decimals}f}` | Precio: `${price:,.2f}` MXN"
         )
 
     # ── Guardar portfolio ─────────────────────────────────────────
     if not github_save_file("data/portfolio.json", portfolio, port_sha, f"💱 Buy {ticker} ({broker})"):
-        await ctx.send("❌ Error guardando portfolio. Usa `!test_github`")
-        return
+        await ctx.send("❌ Error guardando portfolio. Usa `!test_github`"); return
 
     await ctx.send("✅ **Portfolio actualizado en GitHub**")
 
-    # ── Auto-agregar crypto a universe.json si no existe ──────────
+    # ── Auto-agregar crypto a universe.json ───────────────────────
     if is_crypto:
         universe, uni_sha = github_get_file("data/universe.json")
         if universe is None:
             universe = []
-
-        already_in = any(item.get("ticker") == ticker for item in universe)
-
-        if already_in:
-            await ctx.send(f"ℹ️ `{ticker}` ya estaba en el universo — `!balance` y `!señales` la monitorean ✅")
+        already = any(item.get("ticker") == ticker for item in universe)
+        if already:
+            await ctx.send(f"ℹ️ `{ticker}` ya está en el universo — `!balance` la monitorea ✅")
         else:
             crypto_info = CRYPTO_MAP[ticker]
-            new_entry = {
+            universe.append({
                 "ticker": ticker,
-                "yahoo":  crypto_info["yahoo"],   # ej: "BTC-USD"
+                "yahoo":  crypto_info["yahoo"],
                 "broker": "Bitso",
                 "type":   "CRYPTO",
                 "reason": crypto_info["description"],
-            }
-            universe.append(new_entry)
-
-            if github_save_file("data/universe.json", universe, uni_sha, f"₿ Auto-add crypto {ticker}"):
+            })
+            if github_save_file("data/universe.json", universe, uni_sha, f"₿ Auto-add {ticker}"):
                 await ctx.send(
                     f"₿ **`{ticker}` agregado al universo automáticamente**\n"
-                    f"Yahoo Finance: `{crypto_info['yahoo']}`\n"
-                    f"Ahora aparece en `!balance`, `!señales` y futuros `!reporte` ✅"
+                    f"Yahoo ticker: `{crypto_info['yahoo']}`\n"
+                    f"Ahora aparece en `!balance` y `!señales` ✅"
                 )
             else:
                 await ctx.send(
-                    f"⚠️ Portfolio guardado, pero no se pudo agregar `{ticker}` al universo.\n"
-                    f"Agrégalo manualmente en `data/universe.json` con yahoo: `{crypto_info['yahoo']}`"
+                    f"⚠️ Portfolio guardado OK, pero falló agregar `{ticker}` al universo.\n"
+                    f"Agrégalo manualmente con yahoo: `{crypto_info['yahoo']}`"
                 )
 
 
@@ -1530,18 +1633,17 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ Error: {str(error)}")
         traceback.print_exc()
 
-
 @bot.command(name="help")
 async def help_command(ctx):
     """Muestra todos los comandos"""
     
     embed = discord.Embed(
-        title=":robot: COMANDOS DISPONIBLES",
+        title="🤖 COMANDOS DISPONIBLES",
         description="Investment Bot v3.3 - Reporte ejecuta directo en el bot",
         color=discord.Color.green()
     )
     embed.add_field(
-        name=":gear: Configuracion",
+        name="⚙️ Configuracion",
         value=(
              "`!test_github` - Probar conexión GitHub\n"
         ),
@@ -1549,7 +1651,7 @@ async def help_command(ctx):
     )
 
     embed.add_field(
-        name=":bar_chart: Consultas",
+        name="📊 Consultas",
         value=(
             "`!balance` - Ver tu balance\n"
             "`!portafolio` - Ver tus holdings\n"
@@ -1559,7 +1661,7 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name=":currency_exchange: Transacciones",
+        name="💱 Transacciones",
         value=(
             "`!vender TICKER CANTIDAD` - Vender shares\n"
             "`!comprar TICKER CANTIDAD PRECIO [BROKER]` - Comprar shares\n"
@@ -1568,9 +1670,9 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name=":chart_with_upwards_trend: Análisis",
+        name="📈 Análisis",
         value=(
-            "`!reporte PRESUPUESTO` - :new: Generar reporte (directo en bot)\n"
+            "`!reporte PRESUPUESTO` - 🆕 Generar reporte (directo en bot)\n"
             "`!discover_status` - Ver sugerencias\n"
             "`!discover [cantidad]` - Descubrir nuevos activos\n"
             "`!discover_commit` - Aprobar sugerencias\n"
@@ -1579,7 +1681,7 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name=":robot: Automatización",
+        name="🤖 Automatización",
         value=(
             "**Día 1 y 16 (15:00 UTC):**\n"
             "1. Muestra señales de venta\n"
@@ -1593,14 +1695,34 @@ async def help_command(ctx):
     embed.add_field(name="₿ Crypto Universe",
                     value="BTC · ETH · SOL · LINK · ADA · AVAX\n(IA elige 2 según tu perfil)", inline=False)
     
-    embed.set_footer(text=":bulb: v3.3 - !reporte ahora ejecuta directo en el bot (sin webhook)")
+    embed.set_footer(text="💡 v3.3 - !reporte ahora ejecuta directo en el bot (sin webhook)")
     
     await ctx.send(embed=embed)
-
-
 # ════════════════════════════════════════════════════════════════
 # INICIAR
 # ════════════════════════════════════════════════════════════════
+
+def run_health_server():
+    """
+    Mini servidor HTTP en puerto 8080.
+    Requerido por Fly.io para saber que el proceso está vivo.
+    """
+    import threading
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    class HealthHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK - Investment Bot running")
+        def log_message(self, format, *args):
+            pass
+
+    server = HTTPServer(("0.0.0.0", 8080), HealthHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    print("✅ Health server :8080 activo (Fly.io)")
+
 
 if __name__ == "__main__":
     if not BOT_TOKEN:
@@ -1610,5 +1732,6 @@ if __name__ == "__main__":
     elif not GITHUB_TOKEN:
         print("❌ FALTA GB_TOKEN")
     else:
-        print("🚀 Iniciando bot v4.0 con soporte crypto...")
+        print("🚀 Iniciando bot v4.1 — prompts mejorados + crypto auto-detect + Fly.io")
+        run_health_server()
         bot.run(BOT_TOKEN)
